@@ -27,15 +27,16 @@ for line in lines[1:]:
     key, value = line.split(":", 1)
     headers[key] = value
 
-print(method)
-print(headers)
-print(body)
+#routing 
+if path == "/":
+    responce_body = f"{method} Home Page"
+elif path == "/Hello":
+    responce_body = f"{method} Hello Marco"
+elif path == "/close":
+    responce_body = f"{method} Connection Closed BYEEEE"
+else:
+    responce_body = f"{method} 404 not found"
 
-
-
-
-#Responce
-responce_body = "Hello Julian"
 
 response = (
     "HTTP/1.1 200 OK\r\n"
@@ -44,7 +45,6 @@ response = (
     "\r\n"
     f"{responce_body}"
 )
-
 
 #Close connection
 client.sendall(response.encode())
