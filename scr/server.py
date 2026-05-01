@@ -1,6 +1,7 @@
 import socket
 import sys
 import threading
+import ssl
 
 def parse_request(data):
     request = data.decode()
@@ -38,8 +39,8 @@ def handle_response(status_code, response_body):
     }
     return (
         f"HTTP/1.1 {status_code} {status_text[status_code]}\r\n"
-        "Content-Type: Text/plain\r\n"
-        f"content-Lenght: {len(response_body)}\r\n"
+        "Content-Type: text/plain\r\n"
+        f"Content-Length: {len(response_body)}\r\n"
         "\r\n"
         f"{response_body}"
         )
@@ -58,20 +59,31 @@ def handle_client(client):
     #Close connection
     client.sendall(response.encode())
     client.close()
-    
+
+def start_server():
+    while True:
+        #unpack client data 
+        client, address = server.accept()
+        print("Client connected", address)
+
+        thread = threading.Thread(target=handle_client, args=(client,))
+        thread.start()
 
 
 #Start server
 server = socket.socket()
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # tell OS that the port can be reused right away after its closed.
+context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+context.load_cert_chain(certfile="../certs/cert.pem", keyfile="../certs/key.pem")
+server = context.wrap_socket(server, server_side=True)
 server.bind(("localhost", 8080))
 server.listen()
 print("Server is listening...")
 
-while True:
-    #unpack client data 
-    client, address = server.accept()
-    print("Client connected", address)
+server_thread = threading.Thread(target=start_server)
+server_thread.daemon = True
+server_thread.start()
 
-    thread = threading.Thread(target=handle_client, args=(client,))
-    thread.start()
+input("Press Enter to stop server...\n")
+print("Shutting Down")
+server.close()
